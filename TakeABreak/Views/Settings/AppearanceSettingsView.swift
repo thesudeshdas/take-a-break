@@ -12,7 +12,11 @@ struct AppearanceSettingsView: View {
             Section("Preview") {
                 VStack {
                     ZStack {
-                        // Background
+                        // Simulated desktop background
+                        simulatedDesktop
+                            .blur(radius: settings.configuration.blurRadius)
+
+                        // Gradient overlay with configurable opacity
                         RoundedRectangle(cornerRadius: 12)
                             .fill(
                                 LinearGradient(
@@ -21,6 +25,7 @@ struct AppearanceSettingsView: View {
                                     endPoint: .bottomTrailing
                                 )
                             )
+                            .opacity(settings.configuration.overlayOpacity)
 
                         VStack(spacing: 16) {
                             // Countdown ring preview
@@ -70,11 +75,68 @@ struct AppearanceSettingsView: View {
                 }
             }
 
+            Section("Overlay") {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Opacity")
+                        Spacer()
+                        Text("\(Int(settings.configuration.overlayOpacity * 100))%")
+                            .foregroundStyle(.secondary)
+                    }
+                    Slider(value: $settings.configuration.overlayOpacity, in: 0.0...1.0)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Blur")
+                        Spacer()
+                        Text("\(Int(settings.configuration.blurRadius)) px")
+                            .foregroundStyle(.secondary)
+                    }
+                    Slider(value: $settings.configuration.blurRadius, in: 0...30)
+                }
+            }
+
             Section("Messages") {
                 TextField("Break message", text: $settings.configuration.customMessage)
                 Toggle("Show motivational quotes", isOn: $settings.configuration.showMotivationalQuotes)
             }
         }
         .formStyle(.grouped)
+    }
+
+    /// A grid of SF Symbol icons simulating desktop app windows
+    private var simulatedDesktop: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 5),
+                spacing: 12
+            ) {
+                ForEach(desktopIcons, id: \.self) { icon in
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .frame(height: 36)
+                        .overlay(
+                            Image(systemName: icon)
+                                .font(.system(size: 14))
+                                .foregroundStyle(.secondary)
+                        )
+                }
+            }
+            .padding(12)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var desktopIcons: [String] {
+        [
+            "doc.text", "folder", "globe", "envelope", "calendar",
+            "photo", "music.note", "terminal", "gear", "map",
+            "chart.bar", "book", "paintbrush", "cpu", "externaldrive",
+            "printer", "wifi", "lock.shield", "person.crop.circle", "bell",
+            "clock", "magnifyingglass", "paperplane", "bookmark", "star"
+        ]
     }
 }

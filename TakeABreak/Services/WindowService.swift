@@ -18,8 +18,14 @@ final class WindowService {
     func showBreakOverlay(timerViewModel: TimerViewModel) {
         dismissBreakOverlay()
 
+        let blurRadius = timerViewModel.settings.configuration.blurRadius
+
         for screen in NSScreen.screens {
-            let panel = createBreakPanel(for: screen, timerViewModel: timerViewModel)
+            let panel = createBreakPanel(
+                for: screen,
+                timerViewModel: timerViewModel,
+                blurRadius: blurRadius
+            )
             panel.alphaValue = 0
             panel.orderFrontRegardless()
             breakPanels.append(panel)
@@ -37,7 +43,8 @@ final class WindowService {
 
     private func createBreakPanel(
         for screen: NSScreen,
-        timerViewModel: TimerViewModel
+        timerViewModel: TimerViewModel,
+        blurRadius: Double
     ) -> NSPanel {
         let panel = NSPanel(
             contentRect: screen.frame,
@@ -55,9 +62,19 @@ final class WindowService {
         panel.isMovable = false
 
         // Blur effect so the user can see what they were working on
+        let material: NSVisualEffectView.Material
+        switch blurRadius {
+        case ..<5:
+            material = .sheet
+        case 5..<15:
+            material = .hudWindow
+        default:
+            material = .fullScreenUI
+        }
+
         let visualEffectView = NSVisualEffectView(frame: screen.frame)
         visualEffectView.blendingMode = .behindWindow
-        visualEffectView.material = .hudWindow
+        visualEffectView.material = material
         visualEffectView.state = .active
         visualEffectView.autoresizingMask = [.width, .height]
         visualEffectView.appearance = NSAppearance(named: .darkAqua)

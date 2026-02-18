@@ -12,7 +12,7 @@ struct BreakOverlayView: View {
     var body: some View {
         ZStack {
             settings.configuration.breakBackground.view
-                .opacity(0.4)
+                .opacity(settings.configuration.overlayOpacity)
                 .ignoresSafeArea()
 
             VStack(spacing: 40) {

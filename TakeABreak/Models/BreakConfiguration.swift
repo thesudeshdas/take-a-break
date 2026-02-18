@@ -25,6 +25,8 @@ struct BreakConfiguration: Codable, Equatable {
     var breakBackground: BreakBackgroundType = .gradientBlue
     var customMessage: String = "Look at something 20 feet away"
     var showMotivationalQuotes: Bool = true
+    var overlayOpacity: Double = 0.4
+    var blurRadius: Double = 10
 
     // Behavior
     var launchAtLogin: Bool = false
