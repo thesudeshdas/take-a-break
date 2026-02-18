@@ -65,5 +65,6 @@ struct MenuBarView: View {
             .padding(.vertical, 8)
         }
         .frame(width: 280)
+        .focusable(false)
     }
 }
