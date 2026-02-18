@@ -107,6 +107,10 @@ final class TimerViewModel {
         case .working(let remaining):
             timerTask?.cancel()
             phase = .paused(previousPhase: .manual, remaining: remaining)
+        case .preBreak(let remaining):
+            timerTask?.cancel()
+            windowService.dismissPreBreakNotification()
+            phase = .paused(previousPhase: .manual, remaining: remaining)
         case .paused(_, let remaining):
             phase = .working(remaining: remaining)
             startWorkTimer(duration: remaining)

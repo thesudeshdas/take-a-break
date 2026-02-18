@@ -20,8 +20,18 @@ final class WindowService {
 
         for screen in NSScreen.screens {
             let panel = createBreakPanel(for: screen, timerViewModel: timerViewModel)
+            panel.alphaValue = 0
             panel.orderFrontRegardless()
             breakPanels.append(panel)
+        }
+
+        // Slow fade-in so the break screen isn't jarring
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 1.0
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            for panel in self.breakPanels {
+                panel.animator().alphaValue = 1
+            }
         }
     }
 
@@ -44,10 +54,26 @@ final class WindowService {
         panel.ignoresMouseEvents = false
         panel.isMovable = false
 
+        // Blur effect so the user can see what they were working on
+        let visualEffectView = NSVisualEffectView(frame: screen.frame)
+        visualEffectView.blendingMode = .behindWindow
+        visualEffectView.material = .hudWindow
+        visualEffectView.state = .active
+        visualEffectView.autoresizingMask = [.width, .height]
+        visualEffectView.appearance = NSAppearance(named: .darkAqua)
+
         let hostingView = NSHostingView(
             rootView: BreakOverlayView(timerVM: timerViewModel)
+                .background(Color.clear)
         )
-        panel.contentView = hostingView
+        hostingView.frame = screen.frame
+        hostingView.autoresizingMask = [.width, .height]
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = .clear
+
+        // Hosting view must be a subview of the blur view so blur shows through
+        visualEffectView.addSubview(hostingView)
+        panel.contentView = visualEffectView
 
         return panel
     }
