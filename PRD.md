@@ -144,7 +144,10 @@ A lightweight, native macOS menu bar app that reminds users to take regular eye 
 | A-3 | Automatic text color per theme | P1 | Done |
 | A-4 | Custom break message | P1 | Done |
 | A-5 | Toggle motivational quotes | P2 | Done |
-| A-6 | Custom theme support (user-defined colors) | P3 | Not Started |
+| A-6 | Overlay opacity slider (0–100%) with live preview | P1 | Done |
+| A-7 | Blur intensity slider (0–30 px) with live preview | P1 | Done |
+| A-8 | Simulated desktop in preview to visualize opacity & blur | P2 | Done |
+| A-9 | Custom theme support (user-defined colors) | P3 | Not Started |
 
 ### 3.8 Settings & Persistence
 
@@ -273,7 +276,10 @@ Settings Window
 │   └── Volume slider
 │
 ├── Appearance
+│   ├── Live preview (simulated desktop + overlay)
 │   ├── Theme picker (6 options with preview)
+│   ├── Overlay opacity slider (0–100%)
+│   ├── Blur intensity slider (0–30 px)
 │   ├── Custom break message field
 │   └── Show motivational quotes toggle
 │

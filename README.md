@@ -32,6 +32,9 @@ Resumes automatically when the condition ends.
 ### Appearance
 Six visual themes for the break overlay:
 - Ocean Blue, Forest Green, Warm Sunset, Deep Purple, Dark, Minimal
+- Adjustable overlay opacity (0–100%)
+- Adjustable blur intensity (0–30 px)
+- Live preview in settings with simulated desktop background
 
 ### Sounds
 - Separate start/end break sounds (Chime, Bell, Nature Birds, Water, or silent)
@@ -148,6 +151,8 @@ All settings are persisted to `UserDefaults` as JSON via `SettingsManager`. Key 
 | Break start sound | Chime | 5 options |
 | Break end sound | Bell | 5 options |
 | Theme | Ocean Blue | 6 options |
+| Overlay opacity | 40% | 0–100% |
+| Blur radius | 10 px | 0–30 px |
 | Strict mode | Off | — |
 | Launch at login | Off | — |
 

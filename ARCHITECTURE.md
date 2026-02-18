@@ -219,6 +219,8 @@ Properties:
 - `level: .screenSaver` — Displays above normal windows
 - `styleMask: .nonactivatingPanel` — Doesn't steal focus
 - `collectionBehavior: .canJoinAllSpaces` — Visible on all Spaces
+- `NSVisualEffectView.material` — Dynamic based on user's blur radius setting (`.sheet` for 0–5, `.hudWindow` for 5–15, `.fullScreenUI` for 15+)
+- Overlay opacity driven by `overlayOpacity` config value
 
 ### 4.2 Pre-Break Notification
 
