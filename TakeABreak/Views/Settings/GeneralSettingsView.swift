@@ -15,23 +15,26 @@ struct GeneralSettingsView: View {
                     }
 
                 if !settings.configuration.use202020Rule {
-                    Stepper(
-                        "Work duration: \(settings.configuration.workDurationMinutes) min",
+                    durationRow(
+                        label: "Work duration",
                         value: $settings.configuration.workDurationMinutes,
-                        in: 1...120
+                        range: 1...120,
+                        unit: "min"
                     )
 
-                    Stepper(
-                        "Break duration: \(settings.configuration.breakDurationSeconds) sec",
+                    durationRow(
+                        label: "Break duration",
                         value: $settings.configuration.breakDurationSeconds,
-                        in: 5...300,
-                        step: 5
+                        range: 5...300,
+                        step: 5,
+                        unit: "sec"
                     )
 
-                    Stepper(
-                        "Pre-break warning: \(settings.configuration.preBreakWarningSeconds) sec",
+                    durationRow(
+                        label: "Pre-break warning",
                         value: $settings.configuration.preBreakWarningSeconds,
-                        in: 3...30
+                        range: 3...30,
+                        unit: "sec"
                     )
                 }
             }
@@ -53,5 +56,39 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private func durationRow(
+        label: String,
+        value: Binding<Int>,
+        range: ClosedRange<Int>,
+        step: Int = 1,
+        unit: String
+    ) -> some View {
+        HStack {
+            Text(label)
+            Spacer()
+            TextField(
+                "",
+                value: value,
+                format: .number
+            )
+            .frame(width: 50)
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.trailing)
+            .onChange(of: value.wrappedValue) { _, newValue in
+                value.wrappedValue = min(max(newValue, range.lowerBound), range.upperBound)
+            }
+            Text(unit)
+                .foregroundStyle(.secondary)
+                .frame(width: 28, alignment: .leading)
+            Stepper(
+                "",
+                value: value,
+                in: range,
+                step: step
+            )
+            .labelsHidden()
+        }
     }
 }
