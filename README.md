@@ -4,6 +4,8 @@ A native macOS menu bar application that helps protect your eyes using the **20-
 
 Built with SwiftUI. No third-party dependencies. Runs quietly in your menu bar.
 
+Take a Break is a lightweight, zero-dependency macOS menu bar app for the 20-20-20 rule. It stays simple and out of your way.
+
 ## Features
 
 ### Core Timer
@@ -79,6 +81,7 @@ Build and run (`Cmd+R`) in Xcode. The app appears in your menu bar with an eye i
 ```
 TakeABreak/
 ├── TakeABreakApp.swift          # App entry point (MenuBarExtra + Settings)
+├── AppDelegate.swift               # Menu bar setup, floating panel management
 ├── Info.plist                   # LSUIElement, camera usage description
 ├── TakeABreak.entitlements      # Hardened runtime entitlements
 │
@@ -93,10 +96,8 @@ TakeABreak/
 │   └── SettingsManager.swift    # UserDefaults persistence (singleton)
 │
 ├── Views/
-│   ├── MenuBar/
-│   │   ├── MenuBarView.swift           # Main menu bar popover
-│   │   ├── TimerMenuBarLabel.swift     # Menu bar icon + countdown
-│   │   └── QuickControlsView.swift     # Start/Pause/Reset/Break Now buttons
+│   ├── MainPanelView.swift             # Floating panel main view
+│   ├── TimerControlView.swift          # Timer display and controls
 │   ├── Break/
 │   │   ├── BreakOverlayView.swift      # Full-screen break UI
 │   │   ├── BreakCountdownView.swift    # Circular progress ring
@@ -156,6 +157,16 @@ All settings are persisted to `UserDefaults` as JSON via `SettingsManager`. Key 
 | Strict mode | Off | — |
 | Launch at login | Off | — |
 
+## Project Vision
+
+Take a Break is intentionally simple. It does one thing well — reminds you to rest your eyes — without collecting data, requiring an account, or phoning home. Every feature decision is filtered through: "Does this help the user take breaks without getting in their way?"
+
+See the [Product Requirements Document](./PRD.md) for the full roadmap.
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guide](./CONTRIBUTING.md) before submitting a pull request.
+
 ## License
 
-All rights reserved.
+This project is licensed under the [MIT License](./LICENSE).
