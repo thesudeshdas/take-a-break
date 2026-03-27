@@ -43,9 +43,19 @@ If the project fails to build, make sure your Xcode Command Line Tools are up to
 - Use Swift 5.9 `@Observable` (not `ObservableObject`).
 - No third-party dependencies unless absolutely necessary and approved by maintainers.
 
-### AI-Assisted Code
+### AI-Assisted Development
 
-- AI-assisted code is welcome.
+AI-assisted code is welcome. If you're using an AI coding agent, this repo includes instruction files that guide them:
+
+- **Claude Code** reads `CLAUDE.md` automatically
+- **Cursor** reads `.cursorrules` automatically
+- **GitHub Copilot** reads `.github/copilot-instructions.md` automatically
+
+These files contain architecture rules, hard constraints, and code patterns specific to this project. They help agents produce code that matches the codebase and avoids common mistakes.
+
+**If your agent isn't one of the above**, point it at `CLAUDE.md` in the project root -- it's the single source of truth.
+
+**Your responsibility as the author:**
 - You must be able to explain every line of your changes during review.
 - Don't submit large AI-generated PRs without prior discussion in an issue.
 
