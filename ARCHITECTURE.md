@@ -2,69 +2,49 @@
 
 ## 1. High-Level Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│                   TakeABreakApp                      │
-│              (@main App entry point)                 │
-│                                                      │
-│  ┌──────────────┐        ┌──────────────────┐       │
-│  │ MenuBarExtra  │        │  Settings Scene  │       │
-│  │  (popover)    │        │  (window)        │       │
-│  └──────┬───────┘        └────────┬─────────┘       │
-└─────────┼─────────────────────────┼──────────────────┘
-          │                         │
-          ▼                         ▼
-┌─────────────────────────────────────────────────────┐
-│                    Views (SwiftUI)                    │
-│                                                      │
-│  MenuBarView  BreakOverlayView  SettingsView        │
-│  QuickControls  BreakCountdown  GeneralSettings     │
-│  TimerLabel     BreakMessage    SmartPauseSettings   │
-│                 PreBreakNotif   SoundsSettings       │
-│                                 AppearanceSettings   │
-│                                 AboutSettings        │
-└──────────────────────┬──────────────────────────────┘
-                       │ @Bindable
-                       ▼
-┌─────────────────────────────────────────────────────┐
-│               ViewModels (@Observable)               │
-│                                                      │
-│  ┌─────────────────┐    ┌──────────────────┐        │
-│  │ TimerViewModel   │    │ SettingsManager  │        │
-│  │                  │    │   (singleton)    │        │
-│  │ - phase          │    │                  │        │
-│  │ - smartPause     │◄───│ - configuration  │        │
-│  │ - breaksToday    │    │ - UserDefaults   │        │
-│  └────────┬─────────┘    └──────────────────┘        │
-└───────────┼──────────────────────────────────────────┘
-            │ delegates to
-            ▼
-┌─────────────────────────────────────────────────────┐
-│                   Services                           │
-│                                                      │
-│  ┌──────────────────┐  ┌──────────────────┐         │
-│  │SmartPauseService │  │  SoundService    │         │
-│  │- monitorReasons()│  │- playSound()     │         │
-│  └──────────────────┘  └──────────────────┘         │
-│  ┌──────────────────┐  ┌──────────────────┐         │
-│  │ WindowService    │  │LaunchAtLogin     │         │
-│  │- showOverlay()   │  │Service           │         │
-│  │- showPreBreak()  │  │- enable/disable  │         │
-│  └──────────────────┘  └──────────────────┘         │
-│  ┌──────────────────┐                               │
-│  │NotificationSvc   │                               │
-│  │- sendNotification│                               │
-│  └──────────────────┘                               │
-└─────────────────────────────────────────────────────┘
-            │ uses
-            ▼
-┌─────────────────────────────────────────────────────┐
-│                  Models (Data)                        │
-│                                                      │
-│  TimerPhase        BreakConfiguration                │
-│  PausedFrom        BreakSoundType                    │
-│  SmartPauseReason  BreakBackgroundType               │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    App["TakeABreakApp<br/><i>@main App entry point</i>"]
+    App --> MBE["MenuBarExtra<br/>(floating panel)"]
+    App --> SS["Settings Scene<br/>(window)"]
+
+    MBE --> Views
+    SS --> Views
+
+    subgraph Views ["Views (SwiftUI)"]
+        direction LR
+        V1["MainPanelView<br/>TimerControlView"]
+        V2["BreakOverlayView<br/>BreakCountdown<br/>BreakMessage<br/>PreBreakNotif"]
+        V3["SettingsView<br/>GeneralSettings<br/>SmartPauseSettings<br/>SoundsSettings<br/>AppearanceSettings<br/>AboutSettings"]
+    end
+
+    Views -->|"@Bindable"| ViewModels
+
+    subgraph ViewModels ["ViewModels (@Observable)"]
+        direction LR
+        TVM["TimerViewModel<br/>- phase<br/>- smartPause<br/>- breaksToday"]
+        SM["SettingsManager<br/>(singleton)<br/>- configuration<br/>- UserDefaults"]
+        SM -->|reads| TVM
+    end
+
+    ViewModels -->|"delegates to"| Services
+
+    subgraph Services
+        direction LR
+        SPS["SmartPauseService<br/>- monitorReasons()"]
+        SND["SoundService<br/>- playSound()"]
+        WS["WindowService<br/>- showOverlay()<br/>- showPreBreak()"]
+        LAL["LaunchAtLoginService<br/>- enable/disable"]
+        NS["NotificationService<br/>- sendNotification"]
+    end
+
+    Services -->|"uses"| Models
+
+    subgraph Models ["Models (Data)"]
+        direction LR
+        M1["TimerPhase<br/>PausedFrom<br/>SmartPauseReason"]
+        M2["BreakConfiguration<br/>BreakSoundType<br/>BreakBackgroundType"]
+    end
 ```
 
 ## 2. Design Patterns
@@ -93,34 +73,28 @@ Services encapsulate all system-level interactions, keeping ViewModels testable 
 
 The timer is modeled as a finite state machine via the `TimerPhase` enum:
 
-```
-                    ┌──────────┐
-                    │   IDLE   │
-                    └────┬─────┘
-                         │ start()
-                         ▼
-              ┌──────────────────┐
-         ┌───►│    WORKING       │◄────────────────┐
-         │    │ (remaining: T)   │                  │
-         │    └──┬───────────┬───┘                  │
-         │       │           │                      │
-         │ resume│     timer │ tick                  │
-         │       │     reaches                      │
-         │       │     warning                      │
-    ┌────┴────┐  │     period                       │
-    │ PAUSED  │◄─┘       │                          │
-    │(from,T) │          ▼                          │
-    └─────────┘  ┌───────────────┐                  │
-     manual or   │  PRE-BREAK    │                  │
-     smart pause │ (remaining: T)│                  │
-                 └───────┬───────┘                  │
-                         │ countdown                │
-                         │ reaches 0                │
-                         ▼                          │
-                 ┌───────────────┐     break ends   │
-                 │   ON-BREAK    ├──────────────────┘
-                 │ (remaining: T)│  (auto or manual)
-                 └───────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> WORKING : start()
+    WORKING --> PRE_BREAK : timer reaches warning period
+    WORKING --> PAUSED : manual or smart pause
+    PAUSED --> WORKING : resume
+    PRE_BREAK --> ON_BREAK : countdown reaches 0
+    ON_BREAK --> WORKING : break ends (auto or manual)
+
+    state WORKING {
+        [*] : remaining: T
+    }
+    state PAUSED {
+        [*] : from, remaining: T
+    }
+    state PRE_BREAK {
+        [*] : remaining: T
+    }
+    state ON_BREAK {
+        [*] : remaining: T
+    }
 ```
 
 **Phase transitions:**
@@ -154,49 +128,34 @@ Benefits:
 
 ### 3.1 Settings Flow
 
-```
-SettingsView (UI)
-    │ @Bindable
-    ▼
-SettingsManager.shared.configuration
-    │ didSet
-    ▼
-UserDefaults (JSON encoded)
-    │ on launch
-    ▼
-SettingsManager.init() loads → BreakConfiguration
-    │ accessed by
-    ▼
-TimerViewModel.settings.configuration
+```mermaid
+graph TD
+    A["SettingsView (UI)"] -->|"@Bindable"| B["SettingsManager.shared.configuration"]
+    B -->|"didSet"| C["UserDefaults (JSON encoded)"]
+    C -->|"on launch"| D["SettingsManager.init() loads BreakConfiguration"]
+    D -->|"accessed by"| E["TimerViewModel.settings.configuration"]
 ```
 
 `SettingsManager` is a singleton using `@Observable`. When any property of `BreakConfiguration` changes, it is automatically JSON-encoded and written to `UserDefaults`. On launch, it decodes the stored JSON or falls back to defaults.
 
 ### 3.2 Timer → UI Flow
 
-```
-TimerViewModel.phase (state changes)
-    │ @Observable
-    ▼
-SwiftUI detects change
-    │
-    ├──► MenuBarView re-renders (countdown, status text)
-    ├──► BreakOverlayView re-renders (progress ring, time)
-    └──► PreBreakNotificationView re-renders (countdown)
+```mermaid
+graph TD
+    A["TimerViewModel.phase (state changes)"] -->|"@Observable"| B["SwiftUI detects change"]
+    B --> C["MenuBarView re-renders<br/>(countdown, status text)"]
+    B --> D["BreakOverlayView re-renders<br/>(progress ring, time)"]
+    B --> E["PreBreakNotificationView re-renders<br/>(countdown)"]
 ```
 
 ### 3.3 Smart Pause Flow
 
-```
-SmartPauseService.monitorPauseReasons()
-    │ AsyncStream (yields every 3 seconds)
-    ▼
-TimerViewModel.startSmartPauseMonitoring()
-    │ filters by user settings
-    │ updates smartPauseReasons
-    │
-    ├── reasons not empty + working → pause timer
-    └── reasons empty + was auto-paused → resume timer
+```mermaid
+graph TD
+    A["SmartPauseService.monitorPauseReasons()"] -->|"AsyncStream (yields every 3s)"| B["TimerViewModel.startSmartPauseMonitoring()"]
+    B --> C["filters by user settings<br/>updates smartPauseReasons"]
+    C --> D["reasons not empty + working → pause timer"]
+    C --> E["reasons empty + was auto-paused → resume timer"]
 ```
 
 ## 4. Window Management
@@ -226,14 +185,10 @@ Properties:
 
 A floating `NSPanel` that tracks the mouse cursor:
 
-```
-Mouse position detected via NSEvent.addGlobalMonitorForEvents
-    │
-    ▼
-Panel repositioned near cursor
-    │ with edge detection
-    ▼
-If near screen edge → flip to opposite side
+```mermaid
+graph TD
+    A["Mouse position detected via<br/>NSEvent.addGlobalMonitorForEvents"] --> B["Panel repositioned near cursor"]
+    B -->|"with edge detection"| C["If near screen edge → flip to opposite side"]
 ```
 
 Properties:
@@ -258,9 +213,8 @@ TakeABreakApp.swift
 │   │   └── PreBreakNotificationView
 │   └── AppState (TimerPhase, PausedFrom)
 │
-├── MenuBarView
-│   ├── TimerMenuBarLabel
-│   └── QuickControlsView
+├── MainPanelView
+│   └── TimerControlView
 │
 └── SettingsView
     ├── GeneralSettingsView
